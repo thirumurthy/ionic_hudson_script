@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<project name="Hello World Project" default="info">
+<property name="projname" value="Your Project Name here"/>
+<property name="workspace" value="your project location example D:/AndroidRepo/myapp/"/>
+<property name="apkname" value="your apk name example: myapp"/>
+<property name="zipalignpath" value="zipalign.exe path example  D:\Android\build-tools\22.0.1\"/>
+<property name="keystorepassword" value="12345678"/>
+<property name="destpath" value="where the singened apk need to create include end with / example  D:/APK/"/>
+<property name="repository" value="your repository"/>
+<property name="newVersionCode" value="1.0."/>
+<property environment="env" />
+<property name="build_parameter"  value="${env.BUILD_NUMBER}"/>  
+
+	
+<target name="info">
+	<echo> Build the Project ${projname} </echo>
+	<antcall target="writeversion">
+  </antcall>
+</target>
+
+<target name="writeversion">
+ 	<!--
+	<replaceregexp file="${workspace}config.xml"
+               match='(version=").*(")'
+               replace="\1${newVersionCode}${env.BUILD_NUMBER}\2"
+               byline="true"/> -->
+			   <antcall target="gitpull">  </antcall>
+</target>
+
+<target name="gitpull" >
+	<exec executable="cmd" dir="${workspace}">
+	  <arg line="/c git pull ${repository}"/>
+	</exec>
+	<antcall target="buildfile">  </antcall>
+</target>
+	
+
+    
+<target name="buildfile" >
+	<exec executable="cmd">
+	  <arg line="/c ionic cordova build android --release"/>
+	</exec>
+   <antcall target="renameoldfile">
+  </antcall>
+</target>
+   
+   
+<target name="renameoldfile" >   
+   <rename src="${workspace}platforms/android/build/outputs/apk/${apkname}.apk" dest="${workspace}platforms/android/build/outputs/apk/${apkname}.apk.old"/>
+   <antcall target="signapk">  </antcall>
+   </target>
+
+  
+<target name="signapk" >
+	<exec executable="cmd" dir="${workspace}platforms/android/build/outputs/apk/">
+	  <arg line="/c jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${apkname}.keystore -storepass ${keystorepassword} android-release-unsigned.apk ${apkname}"/>
+	</exec>
+	<antcall target="createapk">  </antcall>
+</target>
+
+
+<target name="createapk" >
+	<exec executable="cmd" dir="${zipalignpath}">
+	  <arg line="/c zipalign.exe -v 4 ${workspace}platforms/android/build/outputs/apk/android-release-unsigned.apk ${workspace}platforms/android/build/outputs/apk/${apkname}.apk"/>
+	</exec>
+	<antcall target="copyapk">  </antcall>	
+</target>
+   
+   
+<target name="copyapk" >
+	<copy file="${workspace}platforms/android/build/outputs/apk/${apkname}.apk" tofile="${destpath}${apkname}.apk"/>
+	
+</target>
+   
+</project>

@@ -1,0 +1,8 @@
+add new project 
+choose Execute Windows batch command
+
+paste the bellow code in command text box:
+
+d:
+cd D:\AndroidRepo\myapp
+ant -buildfile antbuild.xml
